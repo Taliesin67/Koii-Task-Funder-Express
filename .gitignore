@@ -1,4 +1,10 @@
-node_modules
+node_modules/
+dist/
 .env
-.env.funder
-*.pem
+coverage/
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
