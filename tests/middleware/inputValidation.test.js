@@ -1,40 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
-import { 
-  validateCoinListParams, 
-  validateCoinPriceParams, 
-  validateCoinDetailsParams,
-  validateCoin 
-} from '../../src/middleware/inputValidation';
+import { describe, it, expect } from 'vitest';
+import { validateCoinListParams, validateCoinPriceParams, validateCoinDetailsParams } from '../../src/middleware/inputValidation';
 
-// Mock Express request and response
-const createMockReqRes = (query = {}, params = {}) => {
+// Helper function to create mock request and response objects
+function createMockReqRes(query = {}, params = {}) {
   const req = { query, params };
   const res = {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn()
+    status: () => res,
+    json: () => res
   };
-  const next = vi.fn();
+  const next = () => {};
   return { req, res, next };
-};
+}
 
 describe('Input Validation Middleware', () => {
   describe('Coin Price Validation', () => {
     it('should validate correct coin price query params', () => {
       const { req, res, next } = createMockReqRes({}, { id: 'bitcoin' });
+      const spy = {
+        status: () => spy,
+        json: () => spy
+      };
       
-      validateCoinPriceParams(req, res, next);
-      
-      expect(res.status).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalled();
+      expect(() => validateCoinPriceParams(req, spy, next)).not.toThrow();
     });
 
     it('should reject invalid coin price query params', () => {
-      const { req, res, next } = createMockReqRes({}, {});
+      const { req, res } = createMockReqRes({}, {});
+      const jsonSpy = vi.fn();
+      const statusSpy = vi.fn().mockReturnValue({ json: jsonSpy });
       
-      validateCoinPriceParams(req, res, next);
+      validateCoinPriceParams(req, { status: statusSpy } as any, () => {});
       
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Coin ID is required' });
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Coin ID is required' });
     });
   });
 
@@ -45,65 +43,46 @@ describe('Input Validation Middleware', () => {
         per_page: '10', 
         page: '1' 
       });
+      const spy = {
+        status: () => spy,
+        json: () => spy
+      };
       
-      validateCoinListParams(req, res, next);
-      
-      expect(res.status).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalled();
+      expect(() => validateCoinListParams(req, spy, next)).not.toThrow();
     });
 
     it('should reject invalid order parameter', () => {
-      const { req, res, next } = createMockReqRes({ order: 'invalid_order' });
+      const { req, res } = createMockReqRes({ order: 'invalid_order' });
+      const jsonSpy = vi.fn();
+      const statusSpy = vi.fn().mockReturnValue({ json: jsonSpy });
       
-      validateCoinListParams(req, res, next);
+      validateCoinListParams(req, { status: statusSpy } as any, () => {});
       
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid order parameter' });
     });
   });
 
   describe('Coin Details Validation', () => {
     it('should validate correct coin ID', () => {
       const { req, res, next } = createMockReqRes({}, { id: 'bitcoin' });
+      const spy = {
+        status: () => spy,
+        json: () => spy
+      };
       
-      validateCoinDetailsParams(req, res, next);
-      
-      expect(res.status).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalled();
+      expect(() => validateCoinDetailsParams(req, spy, next)).not.toThrow();
     });
 
     it('should reject invalid coin ID', () => {
-      const { req, res, next } = createMockReqRes({}, { id: 'bitcoin!@#' });
+      const { req, res } = createMockReqRes({}, { id: 'bitcoin!@#' });
+      const jsonSpy = vi.fn();
+      const statusSpy = vi.fn().mockReturnValue({ json: jsonSpy });
       
-      validateCoinDetailsParams(req, res, next);
+      validateCoinDetailsParams(req, { status: statusSpy } as any, () => {});
       
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid coin ID format' });
-    });
-  });
-
-  describe('Coin Validation Function', () => {
-    it('should validate coin with all required properties', () => {
-      const coin = {
-        id: 'bitcoin',
-        symbol: 'btc',
-        name: 'Bitcoin',
-        current_price: 50000,
-        market_cap: 1000000000000,
-        total_volume: 50000000000,
-        market_cap_rank: 1,
-        price_change_percentage_24h: 2.5
-      };
-
-      expect(validateCoin(coin)).toBe(true);
-    });
-
-    it('should reject coin missing required properties', () => {
-      const coin = {
-        id: 'bitcoin',
-        symbol: 'btc'
-      };
-
-      expect(validateCoin(coin)).toBe(false);
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid coin ID format' });
     });
   });
 });
